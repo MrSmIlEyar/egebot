@@ -64,6 +64,16 @@ async def main_dialog(message: types.Message):
                              'Количество решённых задач: ' + quantify, reply_markup=markup.profile)
     elif message.text == 'Помощь':
         await message.answer('Бот для ЕГЭ')
-
+@dp.message_handler()
+async def test_by_category(message:types.Message):
+    for i in markup.d.keys():
+        if message.text[1:] == i[:3]:
+            subject = markup.d[i][0]
+            id = message.text[0]
+            s = random.choice(sdamgia.get_catalog(subject)[int(id)-1]['categories'])
+            categoryTests = sdamgia.get_category_by_id(subject, s['category_id'])
+            #print(categoryTests)
+            test = sdamgia.get_problem_by_id(subject,random.choice(categoryTests))
+            await message.answer(test['condition']['text'],reply_markup=markup.back)
 
 executor.start_polling(dp, skip_updates=True)
