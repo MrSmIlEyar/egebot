@@ -16,6 +16,7 @@ from dicts import d_math, d_inf
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.filters import Command
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+import pyrebase
 
 storage = MemoryStorage()
 
@@ -427,4 +428,3 @@ async def req1_(message: types.Message, state: FSMContext):
     photos = InputFile('img.jpg')
 
     await bot.send_photo(chat_id=message.from_user.id, photo=photos)
-ugs
