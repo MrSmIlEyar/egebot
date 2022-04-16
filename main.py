@@ -3,7 +3,6 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InputFile, InputMediaPhoto
-from aiogram.types import InputFile, InputMediaPhoto
 from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.utils import executor
 import markup
@@ -13,8 +12,12 @@ import requests
 import json
 import emoji
 import convertapi
-from dicts import d_math
-import pyrebase
+from dicts import d_math, d_inf
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.dispatcher.filters import Command
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+
+storage = MemoryStorage()
 
 TOKEN = '5120464715:AAHnuFfZcZW4wnFVhReAE6SRpMiE6S7mouY'
 
@@ -22,8 +25,9 @@ sdamgia = SdamGIA()
 storage = MemoryStorage()
 subjectInTest = 'math'
 
+subjectInTest = 'math'
 bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+
 dp = Dispatcher(bot, storage=storage)
 SUBJECT = 'math'
 TESTID = ''
@@ -34,6 +38,8 @@ class Test(StatesGroup):
     test1 = State()
 
 
+class Reqst(StatesGroup):
+    req1 = State()
 async def set_default_commands(dp):
     await dp.bot.set_my_commands([
         types.BotCommand("start", "Запустить бота"),
@@ -229,14 +235,18 @@ async def main_dialog(message: types.Message):
     auth = 'hGxeiEIvUIeQeurIKqjuK7KWsBGtq7LqHa6HwTUV'
     url = 'https://egebot-79552-default-rtdb.europe-west1.firebasedatabase.app/.json'
     if message.text in markup.d.keys():
-        await message.answer('Все задачи', reply_markup=markup.d[message.text][1])
+        SUBJECT = message.text
+        await message.answer('Все функции', reply_markup=markup.d[message.text][1])
     elif message.text in markup.testList:
-        await test_by_category(message)
+        await est_by_category(message)
     elif message.text == 'Сгенерировать тест':
         await generate_test(message, subj=SUBJECT)
-        await test_by_category(message)
+    elif message.text == 'Полезные ссылки':
+        await message.answer(markup.d[SUBJECT][3])
+    elif message.text == 'Поиск задач по запросу':
+        await requestProblem(message, subj=SUBJECT)
     elif message.text == 'Выбор предмета':
-        await message.answer('Каталог предметов', reply_markup=markup.subjectsMenu)
+        await message.answer(emoji.emojize(':clipboard:') + 'Каталог предметов', reply_markup=markup.subjectsMenu)
     elif message.text == 'Главное меню':
         await message.answer('Главное меню', reply_markup=markup.mainMenu)
     elif message.text == 'Профиль':
@@ -244,7 +254,6 @@ async def main_dialog(message: types.Message):
         supported_user = username.replace('.', '-')
         request = requests.get(url + '?auth=' + auth)
         data = request.json()
-        print(data)
         quantify = data[supported_user]['Количество решённых задач']
         await message.answer(emoji.emojize(':heavy_check_mark:') + 'Профиль:' + '\n\n' +
                              'Имя пользователя: ' + username + '\n' +
@@ -254,30 +263,69 @@ async def main_dialog(message: types.Message):
 
 
 @dp.message_handler()
-async def test_by_category(message: types.Message):
+
+async def est_by_category(message: types.Message):
+    global TESTID, subjectInTest, ANSWER
     for i in markup.d.keys():
         if message.text.split()[1] == i[:3]:
-            markuprepl = ''
-            subject = markup.d[i][0]
+            subjectInTest = markup.d[i][0]
+            print(subjectInTest)
             id = int(message.text.split()[0])
-            try:
-                s = random.choice(sdamgia.get_catalog(subject)[int(id) - 1]['categories'])
-                categoryTests = sdamgia.get_category_by_id(subject, s['category_id'])
-                test = sdamgia.get_problem_by_id(subject, random.choice(categoryTests))
-                img = requests.get(test['condition']['images'][0])
-                img_file = open('C:/PycharmProjects/telegrambot/img.svg', 'wb')
-                img_file.write(img.content)
-                img_file.close()
-                convertapi.api_secret = 'PY8ZVrPVo6V5oog1'
-                convertapi.convert('png', {
-                    'File': 'img.svg'
-                }, from_format='svg').save_files('my.png')
-                photo = InputFile('my.png')
-                # k = sdamgia.get_problem_by_id(subject, random.choice(categoryTests), path_to_img='my.jpg',img='pyppeteer')
-                # photo = InputFile('my.jpg')
-                await bot.send_photo(chat_id=message.chat.id, photo=photo, caption=test['condition']['text'])
-            except Exception:
-                await message.answer(test['condition']['text'])
+            if subjectInTest == 'math':
+                tests = random.choice(d_math[id - 1])
+                TESTID = tests['id']
+                ANSWER = tests['answer']
+                if len(tests['images']) == 1:
+                    await bot.send_photo(chat_id=message.chat.id, photo=tests['images'][0][1],
+                                         caption=emoji.emojize(':page_facing_up:') + tests['condition'])
+                elif len(tests['images']) == 0:
+                    await bot.send_message(chat_id=message.chat.id,
+                                           text=emoji.emojize(':page_facing_up:') + tests['condition'])
+                else:
+                    media = []
+                    for photo_id in tests['images']:
+                        media.append(InputMediaPhoto(photo_id[1]))
+                    await bot.send_message(chat_id=message.chat.id,
+                                           text=emoji.emojize(':page_facing_up:') + tests['condition'])
+                    await bot.send_media_group(message.from_user.id, media)
+                if id - 1 < 12:
+                    await est(message)
+            elif subjectInTest == 'inf':
+                tests = random.choice(d_inf[id - 1])
+                TESTID = tests['id']
+                ANSWER = tests['answer']
+                if len(tests['images']) == 1:
+                    await bot.send_photo(chat_id=message.chat.id, photo=tests['images'][0][1],
+                                         caption=emoji.emojize(':page_facing_up:') + tests['condition'])
+                elif len(tests['images']) == 0:
+                    await bot.send_message(chat_id=message.chat.id,
+                                           text=emoji.emojize(':page_facing_up:') + tests['condition'])
+                else:
+                    media = []
+                    for photo_id in tests['images']:
+                        media.append(InputMediaPhoto(photo_id[1]))
+                    await bot.send_message(chat_id=message.chat.id,
+                                           text=emoji.emojize(':page_facing_up:') + tests['condition'])
+                    await bot.send_media_group(message.from_user.id, media)
+                await est(message)
+            else:
+                try:
+                    s = random.choice(sdamgia.get_catalog(subjectInTest)[int(id) - 1]['categories'])
+                    categoryTests = sdamgia.get_category_by_id(subjectInTest, s['category_id'])
+                    test = sdamgia.get_problem_by_id(subjectInTest, random.choice(categoryTests))
+                    img = requests.get(test['condition']['images'][0])
+                    img_file = open('C:/PycharmProjects/telegrambot/img.svg', 'wb')
+                    img_file.write(img.content)
+                    img_file.close()
+                    convertapi.api_secret = 'PY8ZVrPVo6V5oog1'
+                    convertapi.convert('png', {
+                        'File': 'img.svg'
+                    }, from_format='svg').save_files('my.png')
+                    photo = InputFile('my.png')
+                    await bot.send_photo(chat_id=message.chat.id, photo=photo,
+                                         caption=emoji.emojize(':page_facing_up:') + test['condition']['text'])
+                except Exception:
+                    await message.answer(emoji.emojize(':page_facing_up:') + test['condition']['text'])
 
 
 @dp.message_handler()
@@ -360,3 +408,23 @@ async def state1(message: types.Message, state: FSMContext):
 
 
 executor.start_polling(dp, skip_updates=True)
+@dp.message_handler(state=None)
+async def requestProblem(message: types.Message, subj):
+    await Reqst.req1.set()
+    await bot.send_message(chat_id=message.chat.id, text='Введите запрос')
+
+
+@dp.message_handler(state=Reqst.req1)
+async def req1_(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['answer'] = message.text
+    test = sdamgia.search(subjectInTest, data['answer'])[0]
+    print(test)
+    path_to_img = 'img.jpg'
+    sdamgia.get_problem_by_id(subjectInTest, test, img='grabzit', path_to_img=path_to_img,
+                              grabzit_auth={"AppKey": "OGI3MTNjMjNmODJiNGRhMDkyYmUzODg3Y2RlYTgwOWU=",
+                                            "AppSecret": "Pz8/PyR3Mz9dBFE/Pz8/Qj8vZz8/Kj8/O1sTP0d/Pz8="})
+    photos = InputFile('img.jpg')
+
+    await bot.send_photo(chat_id=message.from_user.id, photo=photos)
+ugs
