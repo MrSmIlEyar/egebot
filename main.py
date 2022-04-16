@@ -1,8 +1,10 @@
 from aiogram import Bot, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters import Text
+from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InputFile, InputMediaPhoto
-from aiogram.types import InputFile,InputMediaPhoto
-from aiogram.dispatcher import Dispatcher
+from aiogram.types import InputFile, InputMediaPhoto
+from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.utils import executor
 import markup
 from sdamgia import SdamGIA
@@ -17,9 +19,19 @@ import pyrebase
 TOKEN = '5120464715:AAHnuFfZcZW4wnFVhReAE6SRpMiE6S7mouY'
 
 sdamgia = SdamGIA()
+storage = MemoryStorage()
+subjectInTest = 'math'
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
+dp = Dispatcher(bot, storage=storage)
+SUBJECT = 'math'
+TESTID = ''
+ANSWER = ''
+
+
+class Test(StatesGroup):
+    test1 = State()
 
 
 async def set_default_commands(dp):
@@ -41,7 +53,79 @@ async def set_default_commands(dp):
     ])
 
 
-SUBJECT ='Математика'
+@dp.message_handler(commands='help')
+async def help(message: types.Message):
+    await message.answer('Бот для подготовки к ЕГЭ')
+
+
+@dp.message_handler(commands='profile')
+async def profile(message: types.Message):
+    auth = 'hGxeiEIvUIeQeurIKqjuK7KWsBGtq7LqHa6HwTUV'
+    url = 'https://egebot-79552-default-rtdb.europe-west1.firebasedatabase.app/.json'
+    username = message.from_user["username"]
+    supported_user = username.replace('.', '-')
+    request = requests.get(url + '?auth=' + auth)
+    data = request.json()
+    print(data)
+    quantify = data[supported_user]['Количество решённых задач']
+    await message.answer(emoji.emojize('👤') + 'Профиль:' + '\n\n' +
+                         'Имя пользователя: ' + username + '\n' +
+                         'Количество решённых задач: ' + quantify, reply_markup=markup.profile)
+
+
+@dp.message_handler(commands='math')
+async def math(message: types.Message):
+    await message.answer('Все задачи', reply_markup=markup.d['Математика'][1])
+
+
+@dp.message_handler(commands='rus')
+async def rus(message: types.Message):
+    await message.answer('Все задачи', reply_markup=markup.d['Русский язык'][1])
+
+
+@dp.message_handler(commands='inf')
+async def inf(message: types.Message):
+    await message.answer('Все задачи', reply_markup=markup.d['Информатика'][1])
+
+
+@dp.message_handler(commands='phys')
+async def phys(message: types.Message):
+    await message.answer('Все задачи', reply_markup=markup.d['Физика'][1])
+
+
+@dp.message_handler(commands='chem')
+async def chem(message: types.Message):
+    await message.answer('Все задачи', reply_markup=markup.d['Химия'][1])
+
+
+@dp.message_handler(commands='bio')
+async def math(message: types.Message):
+    await message.answer('Все задачи', reply_markup=markup.d['Биология'][1])
+
+
+@dp.message_handler(commands='geo')
+async def geo(message: types.Message):
+    await message.answer('Все задачи', reply_markup=markup.d['География'][1])
+
+
+@dp.message_handler(commands='soc')
+async def soc(message: types.Message):
+    await message.answer('Все задачи', reply_markup=markup.d['Обществознание'][1])
+
+
+@dp.message_handler(commands='lit')
+async def lit(message: types.Message):
+    await message.answer('Все задачи', reply_markup=markup.d['Литература'][1])
+
+
+@dp.message_handler(commands='his')
+async def lit(message: types.Message):
+    await message.answer('Все задачи', reply_markup=markup.d['История'][1])
+
+
+SUBJECT = 'Математика'
+
+
 @dp.message_handler(commands='start')
 async def command_start(message: types.Message):
     firebaseConfig = {
@@ -149,7 +233,7 @@ async def main_dialog(message: types.Message):
     elif message.text in markup.testList:
         await test_by_category(message)
     elif message.text == 'Сгенерировать тест':
-        await generate_test(message,subj=SUBJECT)
+        await generate_test(message, subj=SUBJECT)
         await test_by_category(message)
     elif message.text == 'Выбор предмета':
         await message.answer('Каталог предметов', reply_markup=markup.subjectsMenu)
@@ -162,13 +246,15 @@ async def main_dialog(message: types.Message):
         data = request.json()
         print(data)
         quantify = data[supported_user]['Количество решённых задач']
-        await message.answer(emoji.emojize('👤') + 'Профиль:' + '\n\n' +
+        await message.answer(emoji.emojize(':heavy_check_mark:') + 'Профиль:' + '\n\n' +
                              'Имя пользователя: ' + username + '\n' +
                              'Количество решённых задач: ' + quantify, reply_markup=markup.profile)
     elif message.text == 'Помощь':
         await message.answer('Бот для ЕГЭ')
+
+
 @dp.message_handler()
-async def test_by_category(message:types.Message):
+async def test_by_category(message: types.Message):
     for i in markup.d.keys():
         if message.text.split()[1] == i[:3]:
             markuprepl = ''
@@ -225,9 +311,52 @@ async def test_by_category(message: types.Message):
 
 
 @dp.message_handler()
-async def generate_test(message:types.Message,subj):
+async def generate_test(message: types.Message, subj):
     problems = {}
-    for i in range(1,markup.d[subj][2]+1):
+    for i in range(1, markup.d[subj][2] + 1):
         problems[i] = 1
-    await message.answer(sdamgia.generate_pdf('math', sdamgia.generate_test(markup.d[subj][0],problems=problems), nums=True, pdf='h'))
+    await message.answer(
+        sdamgia.generate_pdf('math', sdamgia.generate_test(markup.d[subj][0], problems=problems), nums=True, pdf='h'))
+
+
+@dp.message_handler(state=None)
+async def est(message: types.Message):
+    await Test.test1.set()
+    await bot.send_message(chat_id=message.chat.id, text=emoji.emojize(':writing_hand:') + ' Запишите ответ')
+
+
+@dp.message_handler(state=Test.test1)
+async def state1(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['answer'] = message.text
+    async with state.proxy() as data:
+        if data['answer'] == ANSWER:
+            auth = 'hGxeiEIvUIeQeurIKqjuK7KWsBGtq7LqHa6HwTUV'
+            url = 'https://egebot-79552-default-rtdb.europe-west1.firebasedatabase.app/.json'
+            username = message.from_user["username"]
+            supported_user = username.replace('.', '-')
+            request = requests.get(url + '?auth=' + auth)
+            data = request.json()
+            quantify = int(data[supported_user]['Количество решённых задач'])
+            signup_info = str({
+                f'"{supported_user}":{{"Количество решённых задач":"{quantify + 1}"}}'})
+            signup_info = signup_info.replace(".", "-")
+            signup_info = signup_info.replace("\'", "")
+            to_database = json.loads(signup_info)
+            requests.patch(url=url, json=to_database)
+            await message.answer(emoji.emojize(':check_mark_button:') + 'Вы правильно ответили')
+        else:
+            await message.answer(emoji.emojize(':cross_mark:') + 'Вы дали неправильный ответ')
+            await bot.send_message(chat_id=message.from_user.id, text='Загружается решение')
+            path_to_img = 'img.jpg'
+            print(subjectInTest)
+            sdamgia.get_problem_by_id(subjectInTest, TESTID, img='grabzit', path_to_img=path_to_img,
+                                      grabzit_auth={"AppKey": "OGI3MTNjMjNmODJiNGRhMDkyYmUzODg3Y2RlYTgwOWU=",
+                                                    "AppSecret": "Pz8/PyR3Mz9dBFE/Pz8/Qj8vZz8/Kj8/O1sTP0d/Pz8="})
+            photos = InputFile('img.jpg')
+
+            await bot.send_photo(chat_id=message.from_user.id, photo=photos)
+    await state.finish()
+
+
 executor.start_polling(dp, skip_updates=True)
