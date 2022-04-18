@@ -209,7 +209,7 @@ async def est_by_category(message: types.Message):
             id = int(message.text.split()[0])
             if subjectInTest == 'math':
                 tests = random.choice(d_math[id - 1])
-                TESTID = tests['id']
+                TESTID = tests
                 ANSWER = tests['answer']
                 if len(tests['images']) == 1:
                     await bot.send_photo(chat_id=message.chat.id, photo=tests['images'][0][1],
@@ -228,7 +228,7 @@ async def est_by_category(message: types.Message):
                     await est(message)
             elif subjectInTest == 'inf':
                 tests = random.choice(d_inf[id - 1])
-                TESTID = tests['id']
+                TESTID = tests
                 ANSWER = tests['answer']
                 if len(tests['images']) == 1:
                     await bot.send_photo(chat_id=message.chat.id, photo=tests['images'][0][1],
@@ -315,31 +315,11 @@ async def state1(message: types.Message, state: FSMContext):
         data['answer'] = message.text
     async with state.proxy() as data:
         if data['answer'] == ANSWER:
-            auth = 'hGxeiEIvUIeQeurIKqjuK7KWsBGtq7LqHa6HwTUV'
-            url = 'https://egebot-79552-default-rtdb.europe-west1.firebasedatabase.app/.json'
-            username = message.from_user["username"]
-            supported_user = username.replace('.', '-')
-            request = requests.get(url + '?auth=' + auth)
-            data = request.json()
-            quantify = int(data[supported_user]['Количество решённых задач'])
-            signup_info = str({
-                f'"{supported_user}":{{"Количество решённых задач":"{quantify + 1}"}}'})
-            signup_info = signup_info.replace(".", "-")
-            signup_info = signup_info.replace("\'", "")
-            to_database = json.loads(signup_info)
-            requests.patch(url=url, json=to_database)
             await message.answer(emoji.emojize(':check_mark_button:') + 'Вы правильно ответили')
         else:
             await message.answer(emoji.emojize(':cross_mark:') + 'Вы дали неправильный ответ')
-            await bot.send_message(chat_id=message.from_user.id, text='Загружается решение')
-            path_to_img = 'img.jpg'
-            print(subjectInTest)
-            sdamgia.get_problem_by_id(subjectInTest, TESTID, img='grabzit', path_to_img=path_to_img,
-                                      grabzit_auth={"AppKey": "OGI3MTNjMjNmODJiNGRhMDkyYmUzODg3Y2RlYTgwOWU=",
-                                                    "AppSecret": "Pz8/PyR3Mz9dBFE/Pz8/Qj8vZz8/Kj8/O1sTP0d/Pz8="})
-            photos = InputFile('img.jpg')
-
-            await bot.send_photo(chat_id=message.from_user.id, photo=photos)
+            await bot.send_message(chat_id=message.from_user.id, text='Решение')
+            await bot.send_photo(chat_id=message.from_user.id, photo=TESTID['solution'])
     await state.finish()
 
 
