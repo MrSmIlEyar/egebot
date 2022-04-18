@@ -1,0 +1,6 @@
+requests~=2.27.1
+emoji~=1.7.0
+convertapi~=1.4.0
+aiogram~=2.19
+sdamgia-api~=0.1.7
+Pyrebase4~=4.5.0
