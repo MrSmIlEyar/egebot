@@ -41,6 +41,8 @@ class Test(StatesGroup):
 
 class Reqst(StatesGroup):
     req1 = State()
+
+
 async def set_default_commands(dp):
     await dp.bot.set_my_commands([
         types.BotCommand("start", "Запустить бота"),
@@ -58,76 +60,6 @@ async def set_default_commands(dp):
         types.BotCommand("geo", "География")
 
     ])
-
-
-@dp.message_handler(commands='help')
-async def help(message: types.Message):
-    await message.answer('Бот для подготовки к ЕГЭ')
-
-
-@dp.message_handler(commands='profile')
-async def profile(message: types.Message):
-    auth = 'hGxeiEIvUIeQeurIKqjuK7KWsBGtq7LqHa6HwTUV'
-    url = 'https://egebot-79552-default-rtdb.europe-west1.firebasedatabase.app/.json'
-    username = message.from_user["username"]
-    supported_user = username.replace('.', '-')
-    request = requests.get(url + '?auth=' + auth)
-    data = request.json()
-    print(data)
-    quantify = data[supported_user]['Количество решённых задач']
-    await message.answer(emoji.emojize('👤') + 'Профиль:' + '\n\n' +
-                         'Имя пользователя: ' + username + '\n' +
-                         'Количество решённых задач: ' + quantify, reply_markup=markup.profile)
-
-
-@dp.message_handler(commands='math')
-async def math(message: types.Message):
-    await message.answer('Все задачи', reply_markup=markup.d['Математика'][1])
-
-
-@dp.message_handler(commands='rus')
-async def rus(message: types.Message):
-    await message.answer('Все задачи', reply_markup=markup.d['Русский язык'][1])
-
-
-@dp.message_handler(commands='inf')
-async def inf(message: types.Message):
-    await message.answer('Все задачи', reply_markup=markup.d['Информатика'][1])
-
-
-@dp.message_handler(commands='phys')
-async def phys(message: types.Message):
-    await message.answer('Все задачи', reply_markup=markup.d['Физика'][1])
-
-
-@dp.message_handler(commands='chem')
-async def chem(message: types.Message):
-    await message.answer('Все задачи', reply_markup=markup.d['Химия'][1])
-
-
-@dp.message_handler(commands='bio')
-async def math(message: types.Message):
-    await message.answer('Все задачи', reply_markup=markup.d['Биология'][1])
-
-
-@dp.message_handler(commands='geo')
-async def geo(message: types.Message):
-    await message.answer('Все задачи', reply_markup=markup.d['География'][1])
-
-
-@dp.message_handler(commands='soc')
-async def soc(message: types.Message):
-    await message.answer('Все задачи', reply_markup=markup.d['Обществознание'][1])
-
-
-@dp.message_handler(commands='lit')
-async def lit(message: types.Message):
-    await message.answer('Все задачи', reply_markup=markup.d['Литература'][1])
-
-
-@dp.message_handler(commands='his')
-async def lit(message: types.Message):
-    await message.answer('Все задачи', reply_markup=markup.d['История'][1])
 
 
 SUBJECT = 'Математика'
@@ -162,7 +94,9 @@ async def command_start(message: types.Message):
 
 @dp.message_handler(commands='help')
 async def help(message: types.Message):
-    await message.answer('Бот для подготовки к ЕГЭ')
+    await message.answer('''По всем вопросам обращаться к:
+                     @isalahov
+                @mr_smile_offical''')
 
 
 @dp.message_handler(commands='profile')
@@ -256,15 +190,16 @@ async def main_dialog(message: types.Message):
         request = requests.get(url + '?auth=' + auth)
         data = request.json()
         quantify = data[supported_user]['Количество решённых задач']
-        await message.answer(emoji.emojize(':heavy_check_mark:') + 'Профиль:' + '\n\n' +
+        await message.answer(emoji.emojize('👤') + 'Профиль:' + '\n\n' +
                              'Имя пользователя: ' + username + '\n' +
                              'Количество решённых задач: ' + quantify, reply_markup=markup.profile)
     elif message.text == 'Помощь':
-        await message.answer('Бот для ЕГЭ')
+        await message.answer('''По всем вопросам обращаться к:
+                     @isalahov
+                @mr_smile_offical''')
 
 
 @dp.message_handler()
-
 async def est_by_category(message: types.Message):
     global TESTID, subjectInTest, ANSWER
     for i in markup.d.keys():
@@ -408,7 +343,6 @@ async def state1(message: types.Message, state: FSMContext):
     await state.finish()
 
 
-executor.start_polling(dp, skip_updates=True)
 @dp.message_handler(state=None)
 async def requestProblem(message: types.Message, subj):
     await Reqst.req1.set()
@@ -428,3 +362,6 @@ async def req1_(message: types.Message, state: FSMContext):
     photos = InputFile('img.jpg')
 
     await bot.send_photo(chat_id=message.from_user.id, photo=photos)
+
+
+executor.start_polling(dp, skip_updates=True)
