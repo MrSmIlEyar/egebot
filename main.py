@@ -337,8 +337,8 @@ async def req1_(message: types.Message, state: FSMContext):
     print(test)
     path_to_img = 'img.jpg'
     sdamgia.get_problem_by_id(subjectInTest, test, img='grabzit', path_to_img=path_to_img,
-                              grabzit_auth={"AppKey": "OGI3MTNjMjNmODJiNGRhMDkyYmUzODg3Y2RlYTgwOWU=",
-                                            "AppSecret": "Pz8/PyR3Mz9dBFE/Pz8/Qj8vZz8/Kj8/O1sTP0d/Pz8="})
+                              grabzit_auth={"AppKey": "YjhhN2Q3YTFlNWI0NDIxNjlhZmEyMTRmZTA1OWJmNDk=",
+                                                    "AppSecret": "Yj9YQT8/bD9aWT96Pz8hPz8/Pz8/P1YNPT9ZTUlybUI="})
     photos = InputFile('img.jpg')
 
     await bot.send_photo(chat_id=message.from_user.id, photo=photos)
