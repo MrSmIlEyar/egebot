@@ -33,7 +33,7 @@ dp = Dispatcher(bot, storage=storage)
 SUBJECT = 'math'
 TESTID = ''
 ANSWER = ''
-
+TestIdDict = {}
 
 class Test(StatesGroup):
     test1 = State()
@@ -77,6 +77,7 @@ async def command_start(message: types.Message):
         'appId': "1:878336561547:web:547ef57a8c1bf2c0a19f8e",
         'measurementId': "G-PJ20VQMKJN"
     }
+    TestIdDict[message.from_user.id] = []
     firebase = pyrebase.initialize_app(firebaseConfig)
     username = message.from_user['username']
     db = firebase.database()
@@ -201,7 +202,7 @@ async def main_dialog(message: types.Message):
 
 @dp.message_handler()
 async def est_by_category(message: types.Message):
-    global TESTID, subjectInTest, ANSWER
+    global TESTID, subjectInTest, ANSWER,TestIdDict
     for i in markup.d.keys():
         if message.text.split()[1] == i[:3]:
             subjectInTest = markup.d[i][0]
@@ -209,8 +210,9 @@ async def est_by_category(message: types.Message):
             id = int(message.text.split()[0])
             if subjectInTest == 'math':
                 tests = random.choice(d_math[id - 1])
-                TESTID = tests
+                TESTID= tests
                 ANSWER = tests['answer']
+                TestIdDict[message.from_user.id] = [TESTID,ANSWER]
                 if len(tests['images']) == 1:
                     await bot.send_photo(chat_id=message.chat.id, photo=tests['images'][0][1],
                                          caption=emoji.emojize(':page_facing_up:') + tests['condition'])
@@ -230,6 +232,7 @@ async def est_by_category(message: types.Message):
                 tests = random.choice(d_inf[id - 1])
                 TESTID = tests
                 ANSWER = tests['answer']
+                TestIdDict[message.from_user.id] = [TESTID, ANSWER]
                 if len(tests['images']) == 1:
                     await bot.send_photo(chat_id=message.chat.id, photo=tests['images'][0][1],
                                          caption=emoji.emojize(':page_facing_up:') + tests['condition'])
@@ -312,9 +315,8 @@ async def est(message: types.Message):
 @dp.message_handler(state=Test.test1)
 async def state1(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        data['answer'] = message.text
-    async with state.proxy() as data:
-        if data['answer'] == ANSWER:
+        data[message.from_user.id] = message.text
+        if data[message.from_user.id] == TestIdDict[message.from_user.id][1]:
             firebaseConfig = {
                 'apiKey': "AIzaSyD2FYwRp4O_12HTtkKMnmUJLBHvJ4cgaEE",
                 'authDomain': "egebot-79552.firebaseapp.com",
@@ -345,7 +347,7 @@ async def state1(message: types.Message, state: FSMContext):
         else:
             await message.answer(emoji.emojize(':cross_mark:') + 'Вы дали неправильный ответ')
             await bot.send_message(chat_id=message.from_user.id, text='Решение')
-            await bot.send_photo(chat_id=message.from_user.id, photo=TESTID['solution'])
+            await bot.send_photo(chat_id=message.from_user.id, photo=TestIdDict[message.from_user.id][0]['solution'])
     await state.finish()
 
 
