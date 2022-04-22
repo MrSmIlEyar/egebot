@@ -315,6 +315,32 @@ async def state1(message: types.Message, state: FSMContext):
         data['answer'] = message.text
     async with state.proxy() as data:
         if data['answer'] == ANSWER:
+            firebaseConfig = {
+                'apiKey': "AIzaSyD2FYwRp4O_12HTtkKMnmUJLBHvJ4cgaEE",
+                'authDomain': "egebot-79552.firebaseapp.com",
+                'databaseURL': "https://egebot-79552-default-rtdb.europe-west1.firebasedatabase.app",
+                'projectId': "egebot-79552",
+                'storageBucket': "egebot-79552.appspot.com",
+                'messagingSenderId': "878336561547",
+                'appId': "1:878336561547:web:547ef57a8c1bf2c0a19f8e",
+                'measurementId': "G-PJ20VQMKJN"
+            }
+            auth = 'hGxeiEIvUIeQeurIKqjuK7KWsBGtq7LqHa6HwTUV'
+            url = 'https://egebot-79552-default-rtdb.europe-west1.firebasedatabase.app/.json'
+            username = message.from_user["username"]
+            supported_user = username.replace('.', '-')
+            request = requests.get(url + '?auth=' + auth)
+            data = request.json()
+            print(data)
+            quantify = int(data[supported_user]['Количество решённых задач'])
+            quantify += 1
+            firebase = pyrebase.initialize_app(firebaseConfig)
+            username = message.from_user['username']
+            db = firebase.database()
+            a = db.get('hGxeiEIvUIeQeurIKqjuK7KWsBGtq7LqHa6HwTUV')
+            logins = []
+            data = {"Количество решённых задач": f"{quantify}"}
+            db.child(f"{username}").set(data)
             await message.answer(emoji.emojize(':check_mark_button:') + 'Вы правильно ответили')
         else:
             await message.answer(emoji.emojize(':cross_mark:') + 'Вы дали неправильный ответ')
