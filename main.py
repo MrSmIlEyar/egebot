@@ -1,7 +1,4 @@
 from aiogram import Bot, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters import Text
-from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InputFile, InputMediaPhoto
 from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.utils import executor
@@ -9,12 +6,10 @@ import markup
 from sdamgia import SdamGIA
 import random
 import requests
-import json
 import emoji
 import convertapi
 from dicts import d_math, d_inf
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher.filters import Command
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import pyrebase
 
@@ -90,6 +85,7 @@ async def command_start(message: types.Message):
         data = {"Количество решённых задач": "0"}
         db.child(f"{username}").set(data)
     await set_default_commands(dp)
+    await message.answer_sticker(r'CAACAgIAAxkBAAEEicBiYwqNtEmdLWZpkoNbLyQ7jav-hgACxgEAAhZCawpKI9T0ydt5RyQE')
     await message.answer(f'Приветствую {message.from_user["username"]}, давайте начнем подготовку к ЕГЭ.',
                          reply_markup=markup.mainMenu)
 
@@ -200,6 +196,12 @@ async def main_dialog(message: types.Message):
         await message.answer('''По всем вопросам обращаться к:
                      @isalahov
                 @mr_smile_offical''')
+    else:
+        m = [r'CAACAgIAAxkBAAEEiZtiYvyBc_ylTBf_WdfNv5ni6PAybwACAgEAAladvQpO4myBy0Dk_yQE',
+             r'CAACAgIAAxkBAAEEiZliYvxhxEQhHi018c1fvU-_Yx531AACwxMAAm3oEEqGY8B94dy6NCQE',
+             r'CAACAgIAAxkBAAEEiaViYwaP9g8y223rq11vw9YSkqqaCAACiAIAAladvQptz6PIxIEdTSQE',
+             r'CAACAgIAAxkBAAEEiadiYwbCDDYv1qZVaLY3jWK22cbhoQACxQ4AAoxEmUgDii518Wg0eyQE']
+        await message.answer_sticker(random.choice(m))
 
 
 @dp.message_handler()
@@ -211,6 +213,7 @@ async def est_by_category(message: types.Message):
             subjectInTest = realmarkupd[0]
             print(subjectInTest)
             id = int(message.text.split()[0])
+            naturalid = id - 1
             if subjectInTest == 'math':
                 tests = random.choice(d_math[id - 1])
                 TESTID = tests
@@ -307,8 +310,11 @@ async def generate_test(message: types.Message, subj):
     problems = {}
     for i in range(1, markup.d[subj][2] + 1):
         problems[i] = 1
+    id = sdamgia.generate_test(markup.d[subj][0], problems=problems)
     await message.answer(
-        sdamgia.generate_pdf('math', sdamgia.generate_test(markup.d[subj][0], problems=problems), nums=True, pdf='h'))
+        sdamgia.generate_pdf('math', id, nums=True, pdf='h'))
+    await message.answer('Ответы:')
+    await message.answer(sdamgia.generate_pdf('math', id, problems=problems), nums=True, pdf='h', answers=True)
 
 
 @dp.message_handler(state=None)
@@ -346,11 +352,20 @@ async def state1(message: types.Message, state: FSMContext):
             username = message.from_user['username']
             db = firebase.database()
             a = db.get('hGxeiEIvUIeQeurIKqjuK7KWsBGtq7LqHa6HwTUV')
-            logins = []
             data = {"Количество решённых задач": f"{quantify}"}
             db.child(f"{username}").set(data)
+            m = [r'CAACAgIAAxkBAAEEialiYwcpTYhO6Nt_VGbJqOwCgtm69QACfgIAAladvQpBYnRfUWys5CQE',
+                 r'CAACAgIAAxkBAAEEiZ1iYv1M4NJwDaV1u1dTa6uorfWP2gACRQwAAnqdmEo2Geh166RTLCQE',
+                 r'CAACAgIAAxkBAAEEiatiYwdwy2wI0hF0XA5BeWq8UH3YWAACGxMAAlqS2EhjB6Z1XtCrlyQE',
+                 r'CAACAgIAAxkBAAEEia1iYweGg6WebIH5kz7_nDbVl9_43AACogEAAhZCawqhd3djmk6DISQE']
+            await message.answer_sticker(random.choice(m))
             await message.answer(emoji.emojize(':check_mark_button:') + 'Вы правильно ответили')
         else:
+            m = [r'CAACAgIAAxkBAAEEia9iYwgCWX_QFettLvt5cdd0bsPQ2gAC6hgAAqU7iUqsosr9VrUwayQE',
+                 r'CAACAgIAAxkBAAEEibFiYwhVH6O0mdyvZmC4I1AjV1NZHwAC6xQAAqPTsEmXDa8Z4Dsg8CQE',
+                 r'CAACAgIAAxkBAAEEibViYwjXUl7S0nkagxJfVJz4h41DewACThcAAupwOUlnkUXWDzsgtCQE',
+                 r'CAACAgIAAxkBAAEEibdiYwj4-D_lopGL9sbfLgEAAf4yPdIAAqITAALonChIn4AkeJTUYo0kBA']
+            await message.answer_sticker(random.choice(m))
             await message.answer(emoji.emojize(':cross_mark:') + 'Вы дали неправильный ответ')
             await bot.send_message(chat_id=message.from_user.id, text='Решение')
             solution = TestIdDict[message.from_user.id][0]['solution']
