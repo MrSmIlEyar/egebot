@@ -29,6 +29,7 @@ SUBJECT = 'math'
 TESTID = ''
 ANSWER = ''
 TestIdDict = {}
+GenerateTestDict = {}
 
 
 class Test(StatesGroup):
@@ -307,14 +308,18 @@ async def test_by_category(message: types.Message):
 
 @dp.message_handler()
 async def generate_test(message: types.Message, subj):
+    global GenerateTestDict
     problems = {}
     for i in range(1, markup.d[subj][2] + 1):
         problems[i] = 1
     id = sdamgia.generate_test(markup.d[subj][0], problems=problems)
+    GenerateTestDict[message.from_user.id] = id
+    await message.answer(text='Загружается документ')
     await message.answer(
-        sdamgia.generate_pdf('math', id, nums=True, pdf='h'))
+        sdamgia.generate_pdf(markup.d[subj][0], GenerateTestDict[message.from_user.id], nums=True, pdf='h'))
     await message.answer('Ответы:')
-    await message.answer(sdamgia.generate_pdf('math', id, problems=problems), nums=True, pdf='h', answers=True)
+    await message.answer(sdamgia.generate_pdf(markup.d[subj][0], GenerateTestDict[message.from_user.id],
+                                              nums=True, pdf='h', answers=True))
 
 
 @dp.message_handler(state=None)
