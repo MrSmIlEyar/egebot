@@ -35,6 +35,7 @@ TESTID = ''
 ANSWER = ''
 TestIdDict = {}
 
+
 class Test(StatesGroup):
     test1 = State()
 
@@ -182,7 +183,8 @@ async def main_dialog(message: types.Message):
     elif message.text == 'Поиск задач по запросу':
         await requestProblem(message, subj=SUBJECT)
     elif message.text == 'Выбор предмета':
-        await message.answer(emoji.emojize(':clipboard:') + 'Каталог предметов', reply_markup=markup.subjectsMenu)
+        await message.answer(emoji.emojize(':clipboard:') +
+                             'Каталог предметов', reply_markup=markup.subjectsMenu)
     elif message.text == 'Главное меню':
         await message.answer('Главное меню', reply_markup=markup.mainMenu)
     elif message.text == 'Профиль':
@@ -202,17 +204,18 @@ async def main_dialog(message: types.Message):
 
 @dp.message_handler()
 async def est_by_category(message: types.Message):
-    global TESTID, subjectInTest, ANSWER,TestIdDict
+    global TESTID, subjectInTest, ANSWER, TestIdDict
     for i in markup.d.keys():
         if message.text.split()[1] == i[:3]:
-            subjectInTest = markup.d[i][0]
+            realmarkupd = markup.d[i]
+            subjectInTest = realmarkupd[0]
             print(subjectInTest)
             id = int(message.text.split()[0])
             if subjectInTest == 'math':
                 tests = random.choice(d_math[id - 1])
-                TESTID= tests
+                TESTID = tests
                 ANSWER = tests['answer']
-                TestIdDict[message.from_user.id] = [TESTID,ANSWER]
+                TestIdDict[message.from_user.id] = [TESTID, ANSWER]
                 if len(tests['images']) == 1:
                     await bot.send_photo(chat_id=message.chat.id, photo=tests['images'][0][1],
                                          caption=emoji.emojize(':page_facing_up:') + tests['condition'])
@@ -226,7 +229,8 @@ async def est_by_category(message: types.Message):
                     await bot.send_message(chat_id=message.chat.id,
                                            text=emoji.emojize(':page_facing_up:') + tests['condition'])
                     await bot.send_media_group(message.from_user.id, media)
-                if id - 1 < 12:
+                    naturalid = id - 1
+                if naturalid < 12:
                     await est(message)
             elif subjectInTest == 'inf':
                 tests = random.choice(d_inf[id - 1])
@@ -249,7 +253,8 @@ async def est_by_category(message: types.Message):
                 await est(message)
             else:
                 try:
-                    s = random.choice(sdamgia.get_catalog(subjectInTest)[int(id) - 1]['categories'])
+                    catalog = sdamgia.get_catalog(subjectInTest)
+                    s = random.choice(catalog[int(id) - 1]['categories'])
                     categoryTests = sdamgia.get_category_by_id(subjectInTest, s['category_id'])
                     test = sdamgia.get_problem_by_id(subjectInTest, random.choice(categoryTests))
                     img = requests.get(test['condition']['images'][0])
@@ -316,7 +321,8 @@ async def est(message: types.Message):
 async def state1(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data[message.from_user.id] = message.text
-        if data[message.from_user.id] == TestIdDict[message.from_user.id][1]:
+        trueanswer = TestIdDict[message.from_user.id][1]
+        if data[message.from_user.id] == trueanswer:
             firebaseConfig = {
                 'apiKey': "AIzaSyD2FYwRp4O_12HTtkKMnmUJLBHvJ4cgaEE",
                 'authDomain': "egebot-79552.firebaseapp.com",
@@ -347,7 +353,8 @@ async def state1(message: types.Message, state: FSMContext):
         else:
             await message.answer(emoji.emojize(':cross_mark:') + 'Вы дали неправильный ответ')
             await bot.send_message(chat_id=message.from_user.id, text='Решение')
-            await bot.send_photo(chat_id=message.from_user.id, photo=TestIdDict[message.from_user.id][0]['solution'])
+            solution = TestIdDict[message.from_user.id][0]['solution']
+            await bot.send_photo(chat_id=message.from_user.id, photo=solution)
     await state.finish()
 
 
@@ -366,7 +373,7 @@ async def req1_(message: types.Message, state: FSMContext):
     path_to_img = 'img.jpg'
     sdamgia.get_problem_by_id(subjectInTest, test, img='grabzit', path_to_img=path_to_img,
                               grabzit_auth={"AppKey": "YjhhN2Q3YTFlNWI0NDIxNjlhZmEyMTRmZTA1OWJmNDk=",
-                                                    "AppSecret": "Yj9YQT8/bD9aWT96Pz8hPz8/Pz8/P1YNPT9ZTUlybUI="})
+                                            "AppSecret": "Yj9YQT8/bD9aWT96Pz8hPz8/Pz8/P1YNPT9ZTUlybUI="})
     photos = InputFile('img.jpg')
 
     await bot.send_photo(chat_id=message.from_user.id, photo=photos)

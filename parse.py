@@ -21,7 +21,7 @@ s = d_inf
 
 @dp.message_handler()
 async def est_by_category(message: types.Message):
-    for idc in range(7,23):
+    for idc in range(25):
         for i in range(len(s[idc])):
             path_to_img = 'img.jpg'
             sdamgia.get_problem_by_id('inf', s[idc][i]['id'], img='grabzit', path_to_img=path_to_img,
