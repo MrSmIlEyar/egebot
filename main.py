@@ -395,9 +395,9 @@ async def req1_(message: types.Message, state: FSMContext):
     try:
         await message.answer(text='Загружается документ')
         await message.answer(
-            sdamgia.generate_pdf(markup.d[SUBJECT][0], GenerateTestDict[message.from_user.id], nums=True, pdf='h'))
+            sdamgia.generate_pdf(markup.d[SUBJECT][0], GenerateTestDict[message.from_user.id], pdf='h'))
     except Exception:
-        await message.answer(text = 'Такого теста нет')
+        await message.answer(text=emoji.emojize(':cross_mark:') + 'Такого теста нет')
     await state.finish()
 
 
