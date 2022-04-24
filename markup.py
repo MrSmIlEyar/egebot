@@ -45,7 +45,7 @@ subjectsMenu.add(btnMain)
 testList = []
 generateTestButn = KeyboardButton('Сгенерировать тест')
 infoButn = KeyboardButton('Полезные ссылки')
-requestButn = KeyboardButton("Поиск задач по запросу")
+requestButn = KeyboardButton("Получить тест по id")
 for i in d.keys():
     for j in sdamgia.get_catalog(d[i][0]):
         if j['topic_id'].isdigit():

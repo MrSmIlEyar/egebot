@@ -177,8 +177,8 @@ async def main_dialog(message: types.Message):
         await generate_test(message, subj=SUBJECT)
     elif message.text == 'Полезные ссылки':
         await message.answer(markup.d[SUBJECT][3])
-    elif message.text == 'Поиск задач по запросу':
-        await requestProblem(message, subj=SUBJECT)
+    elif message.text == 'Получить тест по id':
+        await requestProblem(message)
     elif message.text == 'Выбор предмета':
         await message.answer(emoji.emojize(':clipboard:') +
                              'Каталог предметов', reply_markup=markup.subjectsMenu)
@@ -379,24 +379,26 @@ async def state1(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=None)
-async def requestProblem(message: types.Message, subj):
+async def requestProblem(message: types.Message):
     await Reqst.req1.set()
-    await bot.send_message(chat_id=message.chat.id, text='Введите запрос')
+    await bot.send_message(chat_id=message.chat.id, text='Введите id теста')
 
 
 @dp.message_handler(state=Reqst.req1)
 async def req1_(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['answer'] = message.text
-    test = sdamgia.search(subjectInTest, data['answer'])[0]
-    print(test)
-    path_to_img = 'img.jpg'
-    sdamgia.get_problem_by_id(subjectInTest, test, img='grabzit', path_to_img=path_to_img,
-                              grabzit_auth={"AppKey": "YjhhN2Q3YTFlNWI0NDIxNjlhZmEyMTRmZTA1OWJmNDk=",
-                                            "AppSecret": "Yj9YQT8/bD9aWT96Pz8hPz8/Pz8/P1YNPT9ZTUlybUI="})
-    photos = InputFile('img.jpg')
-
-    await bot.send_photo(chat_id=message.from_user.id, photo=photos)
+    id = data['answer']
+    GenerateTestDict[message.from_user.id] = id
+    print(GenerateTestDict[message.from_user.id])
+    print(SUBJECT)
+    try:
+        await message.answer(text='Загружается документ')
+        await message.answer(
+            sdamgia.generate_pdf(markup.d[SUBJECT][0], GenerateTestDict[message.from_user.id], nums=True, pdf='h'))
+    except Exception:
+        await message.answer(text = 'Такого теста нет')
+    await state.finish()
 
 
 executor.start_polling(dp, skip_updates=True)
